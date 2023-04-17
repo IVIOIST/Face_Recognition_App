@@ -29,8 +29,6 @@ class FaceApp(App):
         self.counter = 0
         self.last_reset_time = time.time()
         self.face_detector = load_model('VGG19_REV1.h5')
-        with open(os.path.join('temp', 'encodings', 'face_encodings.pickle'), 'rb') as openfile:
-            self.known_faces = pickle.load(openfile)
 
         layout = BoxLayout(orientation='vertical')
         layout.add_widget(self.livefeed)
@@ -107,8 +105,44 @@ class FaceApp(App):
         self.livefeed.texture = video_texture
         
 
+    def datacollection(self, *args):
+        self.consoleoutput.text = 'Data Collection Started'
+        for imgnum in range(9):
+            ret, frame = self.capture.read()
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            resized = tf.image.resize(rgb, (224, 224))
+            yhat = self.face_detector.predict(np.expand_dims(np.divide(resized, 255), 0))
+
+            xmin, ymin, xmax, ymax = yhat[1][0]
+            abs_xmin, abs_ymin, abs_xmax, abs_ymax = np.multiply([xmin, ymin, xmax, ymax], 720).astype(int)
+
+            cropped_frame = frame[abs_ymin - 20:abs_ymax - 50, abs_xmin - 20:abs_xmax - 50]
+            rgb_cropped_frame = cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2RGB)
+
+            image_name = os.path.join('temp', 'collected_images', f'{imgnum}.jpg')
+            time.sleep(1)
+            cv2.imwrite(image_name, cropped_frame)
+            cv2.imshow("Live Feed", frame)
+        self.capture.release()
+        cv2.destroyAllWindows()
+        
+        known_face_encodings = []
+
+        for i in range(9):
+            my_face = face_recognition.load_image_file(os.path.join('temp', 'collected_images', f'{i}.jpg'))
+            my_face_encoding = face_recognition.face_encodings(my_face)
+            if len(my_face_encoding) > 0:
+                known_face_encodings.append(my_face_encoding[0])
+            else:
+                print(f'No face detected in image {i}.jpg')
+
+        with open(os.path.join('temp', 'encodings', 'face_encodings.pickle'), 'wb') as f:
+            pickle.dump(known_face_encodings, f)
+
+        time.sleep (5)
+        for file in os.listdir(os.path.join('temp', 'collected_images')):
+            if os.path.isfile(os.path.join('temp', 'collected_images', file)):
+                os.remove(os.path.join('temp', 'collected_images', file))
+
 if __name__ == '__main__':
     FaceApp().run()
-    
-
-        
