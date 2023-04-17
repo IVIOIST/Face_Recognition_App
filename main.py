@@ -26,7 +26,11 @@ class FaceApp(App):
         self.stopverifybutton = Button(text="Stop Verification", on_press=self.stop_face_detection, size_hint=(1, 0.05))
         self.collectbutton = Button(text="Collect", on_press=self.datacollection, size_hint=(1,0.1))
         self.consoleoutput = Label(text="Console Output", size_hint=(1,0.1))
-
+        self.counter = 0
+        self.last_reset_time = time.time()
+        self.face_detector = load_model('VGG19_REV1.h5')
+        with open(os.path.join('temp', 'encodings', 'face_encodings.pickle'), 'rb') as openfile:
+            self.known_faces = pickle.load(openfile)
 
         layout = BoxLayout(orientation='vertical')
         layout.add_widget(self.livefeed)
@@ -52,11 +56,7 @@ class FaceApp(App):
     def face_detection(self, *args):
         if not self.face_detection_running:
             return
-
-        counter = 0
-        last_reset_time = time.time()
-        with open('face_encodings.pickle', 'rb') as openfile:
-            known_faces = pickle.load(openfile)
+    
         ret, frame = self.capture.read()
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         resized = tf.image.resize(rgb, (224, 224))
