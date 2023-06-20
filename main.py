@@ -1,3 +1,5 @@
+from kivy.core.text import LabelBase
+from kivy.utils import get_color_from_hex
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import Image
@@ -16,19 +18,37 @@ import pickle
 import time
 import numpy as np
 import os
+from kivy.uix.slider import Slider
 
+
+# Register a custom font
+LabelBase.register(name='Roboto', fn_regular=os.path.join('data', 'Roboto-Regular.ttf'))
 
 class FaceApp(App):
 
     def build(self):
+        # Layout Configuration
+        layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+
+        # Live Feed Configuration
         self.livefeed = Image(size_hint=(1, 0.7))
-        self.verifybutton = Button(text="Start Verification", on_press=self.start_face_detection, size_hint=(1,0.05))
-        self.stopverifybutton = Button(text="Stop Verification", on_press=self.stop_face_detection, size_hint=(1, 0.05))
-        self.collectbutton = Button(text="Collect", on_press=self.datacollection, size_hint=(1,0.1))
-        self.consoleoutput = Label(text="Console Output", size_hint=(1,0.1))
+
+        # Button and Label Configuration
+        self.verifybutton = Button(text="Start Verification", on_press=self.start_face_detection, size_hint=(1,0.05), 
+                                   background_color = get_color_from_hex('#007ACC'), font_name='Roboto', font_size=18)
+        self.stopverifybutton = Button(text="Stop Verification", on_press=self.stop_face_detection, size_hint=(1, 0.05),
+                                       background_color = get_color_from_hex('#007ACC'), font_name='Roboto', font_size=18)
+        self.collectbutton = Button(text="Collect", on_press=self.datacollection, size_hint=(1,0.05),
+                                    background_color = get_color_from_hex('#007ACC'), font_name='Roboto', font_size=18)
+        self.consoleoutput = Label(text="Console Output", size_hint=(1,0.1), font_name='Roboto', font_size=24)
         self.counter = 0
         self.last_reset_time = time.time()
         self.face_detector = load_model('VGG19_REV1.h5')
+        self.tolerance = float(0.5)
+        slider = Slider(min=0.1, max=1, value = self.tolerance, step=0.1, size_hint=(1, 0.05))
+        slider.bind(value=self.on_value_change)
+        self.label = Label(text=f'Tolerance: {self.tolerance }', size_hint=(1, 0.03))
+        
         try:
             with open(os.path.join('temp', 'encodings', 'face_encodings.pickle'), 'rb') as openfile:
                 self.known_faces = pickle.load(openfile)
@@ -44,10 +64,13 @@ class FaceApp(App):
         layout = BoxLayout(orientation='vertical')
         layout.add_widget(self.livefeed)
         layout.add_widget(self.consoleoutput)
+        layout.add_widget(slider)
+        layout.add_widget(self.label)
         layout.add_widget(self.verifybutton)
         layout.add_widget(self.stopverifybutton)
         layout.add_widget(self.collectbutton)
         
+
         self.capture = cv2.VideoCapture(0)
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, 720)
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, 720)
@@ -61,6 +84,10 @@ class FaceApp(App):
     def stop_face_detection(self, *args):
         self.face_detection_running = False
         self.consoleoutput.text = 'Face Detection Stopped'
+
+    def on_value_change(self, instance, value):
+        self.tolerance = value
+        self.label.text = f'Tolerance: {self.tolerance}'
 
     def face_detection(self, *args):
         if not self.face_detection_running:
@@ -85,7 +112,7 @@ class FaceApp(App):
                 unknown_face_encoding = face_recognition.face_encodings(rgb_cropped_frame)
                 flag = False
                 for known_face in self.known_faces:
-                    results = face_recognition.compare_faces(known_face, unknown_face_encoding, tolerance=0.6)
+                    results = face_recognition.compare_faces(known_face, unknown_face_encoding, tolerance=self.tolerance)
                     if results[0] == True:  
                         counter = 0
                         flag = True
@@ -164,6 +191,3 @@ class FaceApp(App):
 
 if __name__ == '__main__':
     FaceApp().run()
-    
-
-        
