@@ -48,12 +48,12 @@ class FaceApp(App):
         slider = Slider(min=0.1, max=1, value = self.tolerance, step=0.1, size_hint=(1, 0.05))
         slider.bind(value=self.on_value_change)
         self.label = Label(text=f'Tolerance: {format(self.tolerance, ".1f")}', size_hint=(1, 0.03))
-        
+        self.bboxcolour = (255, 0, 0)
         try:
             with open(os.path.join('temp', 'encodings', 'face_encodings.pickle'), 'rb') as openfile:
                 self.known_faces = pickle.load(openfile)
         except FileNotFoundError:
-            print('face encodings not found, please run collect first when opening')
+            self.consoleoutput.text = 'face encodings not found, please run collect first when opening'
         
         if not os.path.exists(os.path.join('temp', 'encodings')):
             os.makedirs(os.path.join('temp', 'encodings'))
@@ -80,11 +80,11 @@ class FaceApp(App):
     
     def start_face_detection(self, *args):
         self.face_detection_running = True
-
+        self.verifybutton.background_color = get_color_from_hex('#7BE495')
     def stop_face_detection(self, *args):
         self.face_detection_running = False
         self.consoleoutput.text = 'Face Detection Stopped'
-
+        self.verifybutton.background_color = get_color_from_hex('#007ACC')
     def on_value_change(self, instance, value):
         self.tolerance = value
         self.label.text = f'Tolerance: {format(self.tolerance, ".1f")}'
@@ -102,10 +102,11 @@ class FaceApp(App):
         abs_xmin, abs_ymin, abs_xmax, abs_ymax = np.multiply([xmin, ymin, xmax, ymax], 720).astype(int)
 
         if yhat[0] > 0.5:
-            cv2.rectangle(frame, (abs_xmin - 20, abs_ymin - 20), (abs_xmax - 50, abs_ymax - 50), (255,0,0), 2)
+            cv2.rectangle(frame, (abs_xmin - 20, abs_ymin - 20), (abs_xmax - 50, abs_ymax - 50), self.bboxcolour, 2)
             cv2.circle(frame, (abs_xmin - 20, abs_ymin - 20), radius=2, color=(0, 0, 255), thickness=2)
             cv2.circle(frame, (abs_xmax - 50, abs_ymax - 50), radius=2, color=(0, 0, 255), thickness=2)
             self.consoleoutput.text = 'Face Detected'
+            self.bboxcolour = (255, 0, 0)
             try:
                 cropped_frame = frame[abs_ymin - 20:abs_ymax - 50, abs_xmin - 20:abs_xmax - 50]
                 rgb_cropped_frame = cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2RGB)
@@ -118,11 +119,13 @@ class FaceApp(App):
                         flag = True
                         print(flag)
                         self.consoleoutput.text = 'Face Detected | Authorised'
+                        self.bboxcolour = (0, 255, 0)
                         break
                 if flag == False:
                     self.counter += 1 
                     print(flag)
                     self.consoleoutput.text = 'Face Detected | Not Authorised'  
+                    self.bboxcolour = (0, 0, 255)
             except:
                 pass
             if self.counter == 3:
