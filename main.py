@@ -47,7 +47,7 @@ class FaceApp(App):
         self.tolerance = float(0.5)
         slider = Slider(min=0.1, max=1, value = self.tolerance, step=0.1, size_hint=(1, 0.05))
         slider.bind(value=self.on_value_change)
-        self.label = Label(text=f'Tolerance: {self.tolerance }', size_hint=(1, 0.03))
+        self.label = Label(text=f'Tolerance: {format(self.tolerance, ".1f")}', size_hint=(1, 0.03))
         
         try:
             with open(os.path.join('temp', 'encodings', 'face_encodings.pickle'), 'rb') as openfile:
@@ -87,7 +87,7 @@ class FaceApp(App):
 
     def on_value_change(self, instance, value):
         self.tolerance = value
-        self.label.text = f'Tolerance: {self.tolerance}'
+        self.label.text = f'Tolerance: {format(self.tolerance, ".1f")}'
 
     def face_detection(self, *args):
         if not self.face_detection_running:
