@@ -19,10 +19,15 @@ import time
 import numpy as np
 import os
 from kivy.uix.slider import Slider
+from kivy.config import Config
+
+
+# Load the icon file
+Config.set('kivy', 'window_icon', os.path.join('data', 'kivy', 'icon.ico'))
 
 
 # Register a custom font
-LabelBase.register(name='Roboto', fn_regular=os.path.join('data', 'Roboto-Regular.ttf'))
+LabelBase.register(name='Roboto', fn_regular=os.path.join('data', 'font', 'Roboto-Regular.ttf'))
 
 class FaceApp(App):
 
@@ -50,16 +55,16 @@ class FaceApp(App):
         self.label = Label(text=f'Tolerance: {format(self.tolerance, ".1f")}', size_hint=(1, 0.03))
         self.bboxcolour = (255, 0, 0)
         try:
-            with open(os.path.join('temp', 'encodings', 'face_encodings.pickle'), 'rb') as openfile:
+            with open(os.path.join('data', 'encodings', 'face_encodings.pickle'), 'rb') as openfile:
                 self.known_faces = pickle.load(openfile)
         except FileNotFoundError:
             self.consoleoutput.text = 'face encodings not found, please run collect first when opening'
         
-        if not os.path.exists(os.path.join('temp', 'encodings')):
-            os.makedirs(os.path.join('temp', 'encodings'))
+        if not os.path.exists(os.path.join('data', 'encodings')):
+            os.makedirs(os.path.join('data', 'encodings'))
 
-        if not os.path.exists(os.path.join('temp', 'collected_images')):
-            os.makedirs(os.path.join('temp', 'collected_images'))
+        if not os.path.exists(os.path.join('data', 'collected_images')):
+            os.makedirs(os.path.join('data', 'collected_images'))
 
         layout = BoxLayout(orientation='vertical')
         layout.add_widget(self.livefeed)
@@ -165,7 +170,7 @@ class FaceApp(App):
             cropped_frame = frame[abs_ymin - 20:abs_ymax - 50, abs_xmin - 20:abs_xmax - 50]
             rgb_cropped_frame = cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2RGB)
 
-            image_name = os.path.join('temp', 'collected_images', f'{imgnum}.jpg')
+            image_name = os.path.join('data', 'collected_images', f'{imgnum}.jpg')
             time.sleep(1)
             cv2.imwrite(image_name, cropped_frame)
             cv2.imshow("Live Feed", cropped_frame)
@@ -176,20 +181,20 @@ class FaceApp(App):
         known_face_encodings = []
 
         for i in range(9):
-            my_face = face_recognition.load_image_file(os.path.join('temp', 'collected_images', f'{i}.jpg'))
+            my_face = face_recognition.load_image_file(os.path.join('data', 'collected_images', f'{i}.jpg'))
             my_face_encoding = face_recognition.face_encodings(my_face)
             if len(my_face_encoding) > 0:
                 known_face_encodings.append(my_face_encoding[0])
             else:
                 print(f'No face detected in image {i}.jpg')
 
-        with open(os.path.join('temp', 'encodings', 'face_encodings.pickle'), 'wb') as f:
+        with open(os.path.join('data', 'encodings', 'face_encodings.pickle'), 'wb') as f:
             pickle.dump(known_face_encodings, f)
 
         time.sleep (5)
-        for file in os.listdir(os.path.join('temp', 'collected_images')):
-            if os.path.isfile(os.path.join('temp', 'collected_images', file)):
-                os.remove(os.path.join('temp', 'collected_images', file))
+        for file in os.listdir(os.path.join('data', 'collected_images')):
+            if os.path.isfile(os.path.join('data', 'collected_images', file)):
+                os.remove(os.path.join('data', 'collected_images', file))
         
 
 if __name__ == '__main__':
