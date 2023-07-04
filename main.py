@@ -21,13 +21,12 @@ import os
 from kivy.uix.slider import Slider
 from kivy.config import Config
 
-
 # Load the icon file
 Config.set('kivy', 'window_icon', os.path.join('data', 'kivy', 'icon.ico'))
 
-
 # Register a custom font
 LabelBase.register(name='Roboto', fn_regular=os.path.join('data', 'font', 'Roboto-Regular.ttf'))
+
 
 class FaceApp(App):
 
@@ -39,18 +38,18 @@ class FaceApp(App):
         self.livefeed = Image(size_hint=(1, 0.7))
 
         # Button and Label Configuration
-        self.verifybutton = Button(text="Start Verification", on_press=self.start_face_detection, size_hint=(1,0.05), 
-                                   background_color = get_color_from_hex('#007ACC'), font_name='Roboto', font_size=18)
+        self.verifybutton = Button(text="Start Verification", on_press=self.start_face_detection, size_hint=(1, 0.05),
+                                   background_color=get_color_from_hex('#007ACC'), font_name='Roboto', font_size=18)
         self.stopverifybutton = Button(text="Stop Verification", on_press=self.stop_face_detection, size_hint=(1, 0.05),
-                                       background_color = get_color_from_hex('#007ACC'), font_name='Roboto', font_size=18)
-        self.collectbutton = Button(text="Collect", on_press=self.datacollection, size_hint=(1,0.05),
-                                    background_color = get_color_from_hex('#007ACC'), font_name='Roboto', font_size=18)
-        self.consoleoutput = Label(text="Console Output", size_hint=(1,0.1), font_name='Roboto', font_size=24)
+                                       background_color=get_color_from_hex('#007ACC'), font_name='Roboto', font_size=18)
+        self.collectbutton = Button(text="Collect", on_press=self.datacollection, size_hint=(1, 0.05),
+                                    background_color=get_color_from_hex('#007ACC'), font_name='Roboto', font_size=18)
+        self.consoleoutput = Label(text="Console Output", size_hint=(1, 0.1), font_name='Roboto', font_size=24)
         self.counter = 0
         self.last_reset_time = time.time()
         self.face_detector = load_model('VGG19_REV1.h5')
         self.tolerance = float(0.5)
-        slider = Slider(min=0.1, max=1, value = self.tolerance, step=0.1, size_hint=(1, 0.05))
+        slider = Slider(min=0.1, max=1, value=self.tolerance, step=0.1, size_hint=(1, 0.05))
         slider.bind(value=self.on_value_change)
         self.label = Label(text=f'Tolerance: {format(self.tolerance, ".1f")}', size_hint=(1, 0.03))
         self.bboxcolour = (255, 0, 0)
@@ -59,7 +58,7 @@ class FaceApp(App):
                 self.known_faces = pickle.load(openfile)
         except FileNotFoundError:
             self.consoleoutput.text = 'face encodings not found, please run collect first when opening'
-        
+
         if not os.path.exists(os.path.join('data', 'encodings')):
             os.makedirs(os.path.join('data', 'encodings'))
 
@@ -74,22 +73,23 @@ class FaceApp(App):
         layout.add_widget(self.verifybutton)
         layout.add_widget(self.stopverifybutton)
         layout.add_widget(self.collectbutton)
-        
 
         self.capture = cv2.VideoCapture(0)
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, 720)
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, 720)
         self.face_detection_running = False
-        Clock.schedule_interval(self.face_detection, 1.0/33.0)
+        Clock.schedule_interval(self.face_detection, 1.0 / 33.0)
         return layout
-    
+
     def start_face_detection(self, *args):
         self.face_detection_running = True
         self.verifybutton.background_color = get_color_from_hex('#7BE495')
+
     def stop_face_detection(self, *args):
         self.face_detection_running = False
         self.consoleoutput.text = 'Face Detection Stopped'
         self.verifybutton.background_color = get_color_from_hex('#007ACC')
+
     def on_value_change(self, instance, value):
         self.tolerance = value
         self.label.text = f'Tolerance: {format(self.tolerance, ".1f")}'
@@ -118,8 +118,9 @@ class FaceApp(App):
                 unknown_face_encoding = face_recognition.face_encodings(rgb_cropped_frame)
                 flag = False
                 for known_face in self.known_faces:
-                    results = face_recognition.compare_faces(known_face, unknown_face_encoding, tolerance=self.tolerance)
-                    if results[0] == True:  
+                    results = face_recognition.compare_faces(known_face, unknown_face_encoding,
+                                                             tolerance=self.tolerance)
+                    if results[0] == True:
                         counter = 0
                         flag = True
                         print(flag)
@@ -127,9 +128,9 @@ class FaceApp(App):
                         self.bboxcolour = (0, 255, 0)
                         break
                 if flag == False:
-                    self.counter += 1 
+                    self.counter += 1
                     print(flag)
-                    self.consoleoutput.text = 'Face Detected | Not Authorised'  
+                    self.consoleoutput.text = 'Face Detected | Not Authorised'
                     self.bboxcolour = (0, 0, 255)
             except:
                 pass
@@ -144,15 +145,13 @@ class FaceApp(App):
         else:
             self.consoleoutput.text = 'No Face Detected'
 
-
         buf = cv2.flip(frame, 0).tostring()
         video_texture = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr')
         video_texture.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
         self.livefeed.texture = video_texture
-        
 
     def datacollection(self, *args):
-        
+
         capture = cv2.VideoCapture(0)
         capture.set(cv2.CAP_PROP_FRAME_WIDTH, 720)
         capture.set(cv2.CAP_PROP_FRAME_WIDTH, 720)
@@ -191,11 +190,11 @@ class FaceApp(App):
         with open(os.path.join('data', 'encodings', 'face_encodings.pickle'), 'wb') as f:
             pickle.dump(known_face_encodings, f)
 
-        time.sleep (5)
+        time.sleep(5)
         for file in os.listdir(os.path.join('data', 'collected_images')):
             if os.path.isfile(os.path.join('data', 'collected_images', file)):
                 os.remove(os.path.join('data', 'collected_images', file))
-        
+
 
 if __name__ == '__main__':
     FaceApp().run()
