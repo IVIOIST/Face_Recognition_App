@@ -13,6 +13,7 @@ from kivy.graphics.texture import Texture
 from kivy.logger import Logger
 from kivy.uix.slider import Slider
 from kivy.config import Config
+from kivy.uix.dropdown import DropDown
 
 #OpenCV2
 import cv2
@@ -29,7 +30,7 @@ import pickle
 import time
 import numpy as np
 import os
-
+from winotify import Notification, audio
 
 
 # Load the icon file
@@ -58,11 +59,22 @@ class FaceApp(App):
         self.consoleoutput = Label(text="Console Output", size_hint=(1, 0.1), font_name='Roboto', font_size=24)
         self.counter = 0
         self.last_reset_time = time.time()
+        self.last_notification_time = time.time()
         self.face_detector = load_model('VGG19_REV1.h5')
         self.tolerance = float(0.5)
         slider = Slider(min=0.1, max=1, value=self.tolerance, step=0.1, size_hint=(1, 0.05))
         slider.bind(value=self.on_value_change)
         self.label = Label(text=f'Tolerance: {format(self.tolerance, ".1f")}', size_hint=(1, 0.03))
+        self.dropdown = DropDown()
+        btn_lock = Button(text='Lock System', size_hint_y=None, height=44)
+        btn_lock.bind(on_release=lambda btn: self.dropdown.select(btn.text))
+        self.dropdown.add_widget(btn_lock)
+        btn_notify = Button(text='Just Notify', size_hint_y=None, height=44)
+        btn_notify.bind(on_release=lambda btn: self.dropdown.select(btn.text))
+        self.dropdown.add_widget(btn_notify)
+        self.mainbutton = Button(text='Select Action', size_hint=(1, None), height=44)  # Set size_hint_y=None and specify a height
+        self.mainbutton.bind(on_release=self.dropdown.open)
+        self.dropdown.bind(on_select=lambda instance, x: setattr(self.mainbutton, 'text', x))
         self.bboxcolour = (255, 0, 0)
         #Cheking to see if the files structure is correct and building them if necessary
         try:
@@ -85,6 +97,7 @@ class FaceApp(App):
         layout.add_widget(self.verifybutton)
         layout.add_widget(self.stopverifybutton)
         layout.add_widget(self.collectbutton)
+        layout.add_widget(self.mainbutton)
         #Telling OpenCV to flip the camera output along the vertical axis and use a 720,720 resolution
         self.capture = cv2.VideoCapture(0)
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, 720)
@@ -151,6 +164,7 @@ class FaceApp(App):
                         self.consoleoutput.text = 'Face Detected | Authorised'
                         #Set bounding box colour to green for it to be intuitive
                         self.bboxcolour = (0, 255, 0)
+                        print(counter)
                         break
                 #If an unauthorised face is deteced
                 if flag == False:
@@ -160,6 +174,7 @@ class FaceApp(App):
                     self.consoleoutput.text = 'Face Detected | Not Authorised'
                     #Set the bounding box to red
                     self.bboxcolour = (0, 0, 255)
+                    print(counter)
             except:
                 #This took a long time to figure out, pass ensures that the next bit of the code still runs in case the loop is paused mid way
                 pass
@@ -168,8 +183,22 @@ class FaceApp(App):
                 print('fail limit reached')
                 #Resetting the counter so that an authorised user can log in and still use the system
                 self.counter = 0
-                #Using ctypes to send a lock command
-                ctypes.windll.user32.LockWorkStation()
+                if self.mainbutton.text == 'Lock System':
+                    #Using ctypes to send a lock command
+                    ctypes.windll.user32.LockWorkStation()
+                elif self.mainbutton.text == "Just Notify":
+                    current_time = time.time()
+                    print(f"Time since last notification: {current_time - self.last_notification_time}")
+                    #Sending notification only if the last one was sent over a minute ago
+                    if current_time - self.last_notification_time > 60:
+                        print("Sending notification...")
+                        toast = Notification(app_id='Face Recognition', title='Unauthorized Access', msg='You are not authorized to access this system', duration='long', icon=r'C:\Users\Administrator\Documents\Code_Files\Facial_Recognition_App\data\kivy\icon.ico')
+                        toast.set_audio(audio.Reminder, loop=False)
+                        toast.show()
+                        self.last_notification_time = current_time  # Update the last notification time
+                    else:
+                        print("Not enough time has passed since the last notification.")
+
             #Resetting the time currrent_time variables which governs time elapsed for the current counter
             current_time = time.time()
             #This if statement resets the counter every 60 seconds
