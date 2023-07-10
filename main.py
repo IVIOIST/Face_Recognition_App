@@ -34,7 +34,7 @@ from winotify import Notification, audio
 
 
 # Load the icon file
-Config.set('kivy', 'window_icon', os.path.join('data', 'kivy', 'icon.ico'))
+Config.set('kivy', 'window_icon', os.path.join('data', 'kivy', 'icon2.ico'))
 
 # Register a custom font
 LabelBase.register(name='Roboto', fn_regular=os.path.join('data', 'font', 'Roboto-Regular.ttf'))
@@ -59,7 +59,7 @@ class FaceApp(App):
         self.consoleoutput = Label(text="Console Output", size_hint=(1, 0.1), font_name='Roboto', font_size=24)
         self.counter = 0
         self.last_reset_time = time.time()
-        self.last_notification_time = time.time()
+        self.last_notification_time = np.subtract(time.time(), 60)
         self.face_detector = load_model('VGG19_REV1.h5')
         self.tolerance = float(0.5)
         slider = Slider(min=0.1, max=1, value=self.tolerance, step=0.1, size_hint=(1, 0.05))
