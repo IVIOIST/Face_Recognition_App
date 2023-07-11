@@ -1,6 +1,7 @@
 #Importing dependencies
 
 #Dpendencies for kivy
+from kivy.config import Config
 from kivy.core.text import LabelBase
 from kivy.utils import get_color_from_hex
 from kivy.app import App
@@ -12,7 +13,6 @@ from kivy.clock import Clock
 from kivy.graphics.texture import Texture
 from kivy.logger import Logger
 from kivy.uix.slider import Slider
-from kivy.config import Config
 from kivy.uix.dropdown import DropDown
 
 #OpenCV2
@@ -32,9 +32,8 @@ import numpy as np
 import os
 from winotify import Notification, audio
 
-
 # Load the icon file
-Config.set('kivy', 'window_icon', os.path.join('data', 'kivy', 'icon2.ico'))
+Config.set('kivy', 'window_icon', 'data\kivy\icon.ico')
 
 # Register a custom font
 LabelBase.register(name='Roboto', fn_regular=os.path.join('data', 'font', 'Roboto-Regular.ttf'))
@@ -122,17 +121,17 @@ class FaceApp(App):
     def face_detection(self, *args):
         if not self.face_detection_running:
             return
-        #Telling OpenCV to access the webcam
-        ret, frame = self.capture.read()
+        
+        ret, frame = self.capture.read() #Telling OpenCV to access the webcam
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        #Using a built in tensorflow function to resize the image to fit the input of the CNN, it is resized and not cropped so the information about the geometry is still there
-        resized = tf.image.resize(rgb, (224, 224))
-        #Pretty proud of this code, this is to normalise the values of each of the pixel valus from 0-255 to 0-1 for use in the CNN
-        yhat = self.face_detector.predict(np.expand_dims(np.divide(resized, 255), 0))
-        #Utlilising unpacking to save the bounding box coordinates into their respective variables
-        xmin, ymin, xmax, ymax = yhat[1][0]
-        #Converting the normalised coordinates back into pixel coordinates
-        abs_xmin, abs_ymin, abs_xmax, abs_ymax = np.multiply([xmin, ymin, xmax, ymax], 720).astype(int)
+        
+        resized = tf.image.resize(rgb, (224, 224)) #Using a built in tensorflow function to resize the image to fit the input of the CNN, it is resized and not cropped so the information about the geometry is still there
+        
+        yhat = self.face_detector.predict(np.expand_dims(np.divide(resized, 255), 0)) #Pretty proud of this code, this is to normalise the values of each of the pixel valus from 0-255 to 0-1 for use in the CNN
+        
+        xmin, ymin, xmax, ymax = yhat[1][0] #Utlilising unpacking to save the bounding box coordinates into their respective variables
+        
+        abs_xmin, abs_ymin, abs_xmax, abs_ymax = np.multiply([xmin, ymin, xmax, ymax], 720).astype(int) #Converting the normalised coordinates back into pixel coordinates
         #Drawing a bounding box if the confidence is greater than 0.5 (50%)
         if yhat[0] > 0.5:
             #Some manipulation of the bounding box
@@ -143,10 +142,10 @@ class FaceApp(App):
             self.bboxcolour = (255, 0, 0)
             #If no faces are recognised the function will return nothing, then all indexes will be out of range and the application will fail, to prevent this a try/except block is used
             try:
-                #This is cool, using indexing to crop the webcam feed be only the face and saving it as another variable for use later
-                cropped_frame = frame[abs_ymin - 20:abs_ymax - 50, abs_xmin - 20:abs_xmax - 50]
-                #Manipulatin of colour and OpenCV uses BGR format
-                rgb_cropped_frame = cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2RGB)
+                
+                cropped_frame = frame[abs_ymin - 20:abs_ymax - 50, abs_xmin - 20:abs_xmax - 50] #This is cool, using indexing to crop the webcam feed be only the face and saving it as another variable for use later
+                
+                rgb_cropped_frame = cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2RGB) #Manipulatin of colour and OpenCV uses BGR format
                 unknown_face_encoding = face_recognition.face_encodings(rgb_cropped_frame)
                 #Creating a flag to represent the state of the system for use later
                 flag = False
