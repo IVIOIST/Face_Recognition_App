@@ -75,7 +75,7 @@ class FaceApp(App):
         self.mainbutton.bind(on_release=self.dropdown.open)
         self.dropdown.bind(on_select=lambda instance, x: setattr(self.mainbutton, 'text', x))
         self.bboxcolour = (255, 0, 0)
-        #Cheking to see if the files structure is correct and building them if necessary
+        #Cheking to see if the files structure is correct and building them if necessary using the os library
         try:
             with open(os.path.join('data', 'encodings', 'face_encodings.pickle'), 'rb') as openfile:
                 self.known_faces = pickle.load(openfile)
