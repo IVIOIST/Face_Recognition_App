@@ -42,4 +42,6 @@ C:\> pip install -r requirements.txt
 #### 5. 3 Unauthorised faces detected within a window of 60 seconds will trigger the device to lock or a system notification depending on how you select. The counter resets every 60 secconds
 ## Notes
 
-The application expects a speccific directory structure for storing enccodings and other data. Please ensure that required directories exist.
+- The application expects a speccific directory structure for storing enccodings and other data. Please ensure that required directories exist.
+- The model was trained on a 1280x720 camera, for best results, you may choose to replicate this.
+- For best results please ensure that you are not underexposed or overexposed
